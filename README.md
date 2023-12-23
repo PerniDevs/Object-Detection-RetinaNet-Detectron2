@@ -30,14 +30,17 @@ Download the Vehicle Registration Plate dataset from [here](https://www.dropbox.
 
 We will have the following directory structure:
 
+```python
+{
 Dataset
-|-- train
-|   `-- Vehicle registration plate
-|       `-- Label
-`-- validation
-    `-- Vehicle registration plate
-        `-- Label
-
+├── train
+│   └── Vehicle registration plate
+│       └── Label
+└── validation
+    └── Vehicle registration plate
+        └── Label
+}
+```
 
 Unzipping the file will give you a directory Dataset. This directory has two folder train and validation. Each train and validation folder has Vehicle registration plate folder with .jpg images and a folder Labels. Labels folder has bounding box data for the images.
 
