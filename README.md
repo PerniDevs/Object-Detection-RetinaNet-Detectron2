@@ -61,6 +61,31 @@ Data is downloaded from [Open Images Dataset](https://storage.googleapis.com/ope
 
 ## Training
 
+**Data structure**
+
+The following Python dictionary represents the structure for the train dataset, specifically the annotations for bounding boxes in images:
+
+```python
+{
+    'annotations': [
+        {
+            'bbox': [122, 639, 145, 645],
+            'bbox_mode': <BoxMode.XYXY_ABS: 0>,
+            'category_id': 0
+        },
+        {
+            'bbox': [200, 649, 218, 654],
+            'bbox_mode': <BoxMode.XYXY_ABS: 0>,
+            'category_id': 0
+        }
+    ],
+    'file_name': '/kaggle/input/vehivle-registration-plate/Dataset/train/Vehicle registration plate/688f112cf2794184.jpg',
+    'height': 768,
+    'image_id': '688f112cf2794184',
+    'width': 1024
+}
+```
+
 **Model architecture**
 
 Model extracted from COCO detection: *COCO-Detection/retinanet_R_50_FPN_3x.yaml*
@@ -366,71 +391,66 @@ RetinaNet(
 )
 '''
 
-**Data structure**
-
-'''
-python
-
-Structure for train dataset: 
-
-{'annotations': [{'bbox': [122, 639, 145, 645],
-                  'bbox_mode': <BoxMode.XYXY_ABS: 0>,
-                  'category_id': 0},
-                 {'bbox': [200, 649, 218, 654],
-                  'bbox_mode': <BoxMode.XYXY_ABS: 0>,
-                  'category_id': 0}],
- 'file_name': '/kaggle/input/vehivle-registration-plate/Dataset/train/Vehicle '
-              'registration plate/688f112cf2794184.jpg',
- 'height': 768,
- 'image_id': '688f112cf2794184',
- 'width': 1024}
-'''
-
-
 **Instances**
 |   category    | #instances   |
 |:-------------:|:-------------|
 | vehicle-reg-plate | 7761         |
-|               |              |
 
 ## Inference
 
-'''
-python
+The following Python dictionary represents the structure for the test dataset, specifically the annotations for bounding boxes in images:
+
+
+```python
+{'annotations': [{'bbox': [257, 299, 356, 374],
+                  'bbox_mode': <BoxMode.XYXY_ABS: 0>,
+                  'category_id': 0}],
+ 'file_name': '/kaggle/input/vehivle-registration-plate/Dataset/validation/Vehicle '
+              'registration plate/19eba8ac64eed194.jpg',
+ 'height': 768,
+ 'image_id': '19eba8ac64eed194',
+ 'width': 1024
+}
+```
+
+The following Python dictionary represents the structure for the prediction results, containing information about detected instances in an image:
+
+```python
 {
-  'instances': 
-  Instances(
-    num_instances=1, 
-    image_height=768, 
-    image_width=1024, 
+  'instances': Instances(
+    num_instances=1,
+    image_height=768,
+    image_width=1024,
     fields=[
-      pred_boxes: 
-        Boxes(tensor([[395.4830, 324.7726, 681.5881, 425.3839]], device='cuda:0')), 
-        scores: tensor([0.8202], device='cuda:0'), 
-        pred_classes: tensor([0], device='cuda:0')
+      pred_boxes: Boxes(tensor([[395.4830, 324.7726, 681.5881, 425.3839]], device='cuda:0')),
+      scores: tensor([0.8202], device='cuda:0'),
+      pred_classes: tensor([0], device='cuda:0')
     ]
   )
 }
-'''
+```
 
 ![2](images/2.png)
 
 ## COCO Detection Evaluation
 
-'''
-python
-Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.592
- Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.890
- Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.683
- Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.265
- Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.694
- Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.673
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.541
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.673
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.679
- Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.437
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.766
- Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.745
+The following Python code provides the evaluation results for an object detection model. The results include Average Precision (AP) and Average Recall (AR) for various IoU thresholds and object areas.
+
+```python
+{
+    'Average Precision  (AP) @[ IoU=0.50:0.95 | area= all | maxDets=100 ]': 0.592,
+    'Average Precision  (AP) @[ IoU=0.50      | area= all | maxDets=100 ]': 0.890,
+    'Average Precision  (AP) @[ IoU=0.75      | area= all | maxDets=100 ]': 0.683,
+    'Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ]': 0.265,
+    'Average Precision  (AP) @[ IoU=0.50:0.95 | area= medium | maxDets=100 ]': 0.694,
+    'Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ]': 0.673,
+    'Average Recall     (AR) @[ IoU=0.50:0.95 | area= all | maxDets=  1 ]': 0.541,
+    'Average Recall     (AR) @[ IoU=0.50:0.95 | area= all | maxDets= 10 ]': 0.673,
+    'Average Recall     (AR) @[ IoU=0.50:0.95 | area= all | maxDets= 100 ]': 0.679,
+    'Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets= 100 ]': 0.437,
+    'Average Recall     (AR) @[ IoU=0.50:0.95 | area= medium | maxDets= 100 ]': 0.766,
+    'Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets= 100 ]': 0.745
+
 [12/23 16:51:40 d2.evaluation.coco_evaluation]: Evaluation results for bbox: 
 |   AP   |  AP50  |  AP75  |  APs   |  APm   |  APl   |
 |:------:|:------:|:------:|:------:|:------:|:------:|
@@ -442,7 +462,8 @@ OrderedDict([('bbox',
                'APs': 26.5352932831453,
                'APm': 69.44785626949216,
                'APl': 67.28449014299046})])
-'''
+}
+```
 
 ## Run Inference on a Video
 
