@@ -31,12 +31,12 @@ Download the Vehicle Registration Plate dataset from [here](https://www.dropbox.
 We will have the following directory structure:
 
 Dataset
-├── train
-│   └── Vehicle registration plate
-│       └── Label
-└── validation
-    └── Vehicle registration plate
-        └── Label
+|-- train
+|   `-- Vehicle registration plate
+|       `-- Label
+`-- validation
+    `-- Vehicle registration plate
+        `-- Label
 
 
 Unzipping the file will give you a directory Dataset. This directory has two folder train and validation. Each train and validation folder has Vehicle registration plate folder with .jpg images and a folder Labels. Labels folder has bounding box data for the images.
@@ -90,8 +90,8 @@ The following Python dictionary represents the structure for the train dataset, 
 
 Model extracted from COCO detection: *COCO-Detection/retinanet_R_50_FPN_3x.yaml*
 
-'''
-python
+```python
+{
 RetinaNet(
   (backbone): FPN(
     (fpn_lateral3): Conv2d(512, 256, kernel_size=(1, 1), stride=(1, 1))
@@ -389,7 +389,8 @@ RetinaNet(
     (cell_anchors): BufferList()
   )
 )
-'''
+}
+```
 
 **Instances**
 |   category    | #instances   |
