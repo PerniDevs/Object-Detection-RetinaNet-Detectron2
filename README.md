@@ -2,115 +2,452 @@
 <p align="center">
   <img src="./images/opencv.png" alt="OpenCV Logo" width="200" padding-right="20"/>
   <img src="./images/pytorch.jpg" alt="PyTorch Logo" width="200" padding-left="20" />
-  <img src="./images/pylightning1.png" alt="PyTorch Lightning Logo" width="200" padding-left="20"/>
+  <img src="./images/detectron.png" alt="Detectron Logo" width="200" padding-left="20"/>
 </p>
 
-# OPEN CV - Object Classification competition  
+# OPEN CV - Object Detection using RetinaNet and Detectron2 
 
-This competition is about recognition of Kenyan food images.
+Object detection has a huge application in the industry. ANPR (Automatic Number Plate Recognition) is an integral part of the [Electronic Toll Collection](https://en.wikipedia.org/wiki/Electronic_toll_collection). Detecting the number plate is a prerequisite to solving the ANPR problem. 
 
-Evaluation metric is Accuracy score.
-
+In this project, you have to solve the number plate detection problem. 
 
 ## Documentation
 
 - [Pytorch](https://pytorch.org/docs/stable/index.html)
 - [Pytorch Lightning](https://lightning.ai/docs)
-- [Pandas](https://pandas.pydata.org/docs/index.html)
-- [sklearn](https://scikit-learn.org/stable/user_guide.html)
+- [Detectron2](https://detectron2.readthedocs.io/en/latest/)
 
+## Sections
 
-## Acknowledgements
-
- - We thank M. Jalal, K. Wang, S. Jefferson, Y. Zheng, E. O. Nsoesie, and M. Betke for providing the dataset. It could be found here: [Kenyan food DataSet](https://github.com/monajalal/Kenyan-Food)
-
- 
-
-## Evaluation
-The evaluation metric for this competition is Accuracy score. It is the ratio of number of correct predictions to the total number of input samples. In classification task the Accuracy score is given by:
-
-$$\text{Acc} = \frac{\text{Number of correct predictions}}{\text{Total number of predictions}}$$
-
-We can calculate Accuracy score using Confusion Matrix as follows:
-
-$$\text{Acc} = \frac{\sum_{i=1}^n M_ii}{\sum_{i=1}^n-1\sum_{j=1}^n-1 M_ij}\$$
-
-$$\text{Where M = Confusion Matrix}$$
-
-
-**Submission Format**
-
-For every image in the dataset (list of the image IDs is shown in the test.csv file) submission files should contain two columns: Image ID and Image Class.
-
-The file should contain a header and have the following format:
-
-| id | class |
-| --- | --- |
-| 9156739011499789258 | pilau |
-| 2049465964503133373 | nyamachoma |
-| 1234567890123456789 | ugali |
-
-
-
+- Plot Ground Truth Bounding Boxes
+- Training
+- Inference
+- COCO detection evaluation
+- Run Inference on a Video
 
 ## Dataset Description
-The dataset consists of 8,174 images in 13 Kenyan food type classes. Sample images of KenyanFood13 dataset and the number of images in each of the classes are shown below:
+Download the Vehicle Registration Plate dataset from [here](https://www.dropbox.com/s/k81ljpmzy3fgtx9/Dataset.zip?dl=1) and unzip it.
 
-![KenyanFood13](./images/KenyanFood13.png)
+We will have the following directory structure:
 
-The data was splitted into public train set and private test set which is used for evaluation of submissions. You can split public subset into train and validation sets yourself.
-
-You must create a model that predicts a type of food represented on each image.
-
-**File descriptions**
-- train.csv - the training set, contains image ids with corresponding labels
-- test.csv - the test set, contains image ids
-- sample_submission.csv - a sample submission file in the correct format
-- images - the image files (each image is named with its corresponding id)
-
-**Data fields**
-- id - id of the image
-- class - the class which corresponds to the image.
-## Sections and Goals
-
-**Sections**
-* Data Loader
-* Configuration
-* Evaluation Metric
-* Train and Validation
-* Model
-* Utils 
-* Experiment 
-* Tensorboard Dev Scalar Log link 
-* [Kaggle Profile Link](https://www.kaggle.com/competitions/opencv-pytorch-dl-course-classification)  
+Dataset
+├── train
+│   └── Vehicle registration plate
+│       └── Label
+└── validation
+    └── Vehicle registration plate
+        └── Label
 
 
-**Goal**
+Unzipping the file will give you a directory Dataset. This directory has two folder train and validation. Each train and validation folder has Vehicle registration plate folder with .jpg images and a folder Labels. Labels folder has bounding box data for the images.
 
-Share your Kaggle profile link with us here to score , points in the competition.
+For example, For image: Dataset/train/Vehicle registration plate/bf4689922cdfd532.jpg Label file is Dataset/train/Vehicle registration plate/Label/bf4689922cdfd532.txt
 
-For full points, you need a minimum accuracy of 75% on the test data. If accuracy is less than 70%, you gain no points for this section.
+There are one or more lines in each .txt file. Each line represents one bounding box. For example,
 
-Submit submission.csv (prediction for images in test.csv), in the Submit Predictions tab in Kaggle, to get evaluated for this section 
-## Results
+Vehicle registration plate 385.28 445.15 618.24 514.225
+Vehicle registration plate 839.68 266.066462 874.24 289.091462
+We have a single class detection (Vehicle registration plate detection) problem. So bounding box details start from the fourth column in each row.
 
-**Results for 100 epochs**
+Representation is in xmin, ymin, xmax, and ymax format.
 
-Data seems to overfit, accuracy reached 74.726 %:
+It has 5308 training and 386 validation dataset.
 
-![train_100](./images/1.png)
-![val_100](./images/2.png)
+Data is downloaded from [Open Images Dataset](https://storage.googleapis.com/openimages/web/index.html)
 
-**Results after 58 epochs**
+## Plot Ground Truth Bounding Boxes
 
-Accuracy improved to 76.427
+![1](images/1.png)
 
-![train_58](./images/3.png)
-![val_58](./images/4.png)
+## Training
+
+**Model architecture**
+
+Model extracted from COCO detection: *COCO-Detection/retinanet_R_50_FPN_3x.yaml*
+
+'''
+python
+RetinaNet(
+  (backbone): FPN(
+    (fpn_lateral3): Conv2d(512, 256, kernel_size=(1, 1), stride=(1, 1))
+    (fpn_output3): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (fpn_lateral4): Conv2d(1024, 256, kernel_size=(1, 1), stride=(1, 1))
+    (fpn_output4): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (fpn_lateral5): Conv2d(2048, 256, kernel_size=(1, 1), stride=(1, 1))
+    (fpn_output5): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (top_block): LastLevelP6P7(
+      (p6): Conv2d(2048, 256, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1))
+      (p7): Conv2d(256, 256, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1))
+    )
+    (bottom_up): ResNet(
+      (stem): BasicStem(
+        (conv1): Conv2d(
+          3, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False
+          (norm): FrozenBatchNorm2d(num_features=64, eps=1e-05)
+        )
+      )
+      (res2): Sequential(
+        (0): BottleneckBlock(
+          (shortcut): Conv2d(
+            64, 256, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=256, eps=1e-05)
+          )
+          (conv1): Conv2d(
+            64, 64, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=64, eps=1e-05)
+          )
+          (conv2): Conv2d(
+            64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=64, eps=1e-05)
+          )
+          (conv3): Conv2d(
+            64, 256, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=256, eps=1e-05)
+          )
+        )
+        (1): BottleneckBlock(
+          (conv1): Conv2d(
+            256, 64, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=64, eps=1e-05)
+          )
+          (conv2): Conv2d(
+            64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=64, eps=1e-05)
+          )
+          (conv3): Conv2d(
+            64, 256, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=256, eps=1e-05)
+          )
+        )
+        (2): BottleneckBlock(
+          (conv1): Conv2d(
+            256, 64, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=64, eps=1e-05)
+          )
+          (conv2): Conv2d(
+            64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=64, eps=1e-05)
+          )
+          (conv3): Conv2d(
+            64, 256, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=256, eps=1e-05)
+          )
+        )
+      )
+      (res3): Sequential(
+        (0): BottleneckBlock(
+          (shortcut): Conv2d(
+            256, 512, kernel_size=(1, 1), stride=(2, 2), bias=False
+            (norm): FrozenBatchNorm2d(num_features=512, eps=1e-05)
+          )
+          (conv1): Conv2d(
+            256, 128, kernel_size=(1, 1), stride=(2, 2), bias=False
+            (norm): FrozenBatchNorm2d(num_features=128, eps=1e-05)
+          )
+          (conv2): Conv2d(
+            128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=128, eps=1e-05)
+          )
+          (conv3): Conv2d(
+            128, 512, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=512, eps=1e-05)
+          )
+        )
+        (1): BottleneckBlock(
+          (conv1): Conv2d(
+            512, 128, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=128, eps=1e-05)
+          )
+          (conv2): Conv2d(
+            128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=128, eps=1e-05)
+          )
+          (conv3): Conv2d(
+            128, 512, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=512, eps=1e-05)
+          )
+        )
+        (2): BottleneckBlock(
+          (conv1): Conv2d(
+            512, 128, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=128, eps=1e-05)
+          )
+          (conv2): Conv2d(
+            128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=128, eps=1e-05)
+          )
+          (conv3): Conv2d(
+            128, 512, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=512, eps=1e-05)
+          )
+        )
+        (3): BottleneckBlock(
+          (conv1): Conv2d(
+            512, 128, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=128, eps=1e-05)
+          )
+          (conv2): Conv2d(
+            128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=128, eps=1e-05)
+          )
+          (conv3): Conv2d(
+            128, 512, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=512, eps=1e-05)
+          )
+        )
+      )
+      (res4): Sequential(
+        (0): BottleneckBlock(
+          (shortcut): Conv2d(
+            512, 1024, kernel_size=(1, 1), stride=(2, 2), bias=False
+            (norm): FrozenBatchNorm2d(num_features=1024, eps=1e-05)
+          )
+          (conv1): Conv2d(
+            512, 256, kernel_size=(1, 1), stride=(2, 2), bias=False
+            (norm): FrozenBatchNorm2d(num_features=256, eps=1e-05)
+          )
+          (conv2): Conv2d(
+            256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=256, eps=1e-05)
+          )
+          (conv3): Conv2d(
+            256, 1024, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=1024, eps=1e-05)
+          )
+        )
+        (1): BottleneckBlock(
+          (conv1): Conv2d(
+            1024, 256, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=256, eps=1e-05)
+          )
+          (conv2): Conv2d(
+            256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=256, eps=1e-05)
+          )
+          (conv3): Conv2d(
+            256, 1024, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=1024, eps=1e-05)
+          )
+        )
+        (2): BottleneckBlock(
+          (conv1): Conv2d(
+            1024, 256, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=256, eps=1e-05)
+          )
+          (conv2): Conv2d(
+            256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=256, eps=1e-05)
+          )
+          (conv3): Conv2d(
+            256, 1024, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=1024, eps=1e-05)
+          )
+        )
+        (3): BottleneckBlock(
+          (conv1): Conv2d(
+            1024, 256, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=256, eps=1e-05)
+          )
+          (conv2): Conv2d(
+            256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=256, eps=1e-05)
+          )
+          (conv3): Conv2d(
+            256, 1024, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=1024, eps=1e-05)
+          )
+        )
+        (4): BottleneckBlock(
+          (conv1): Conv2d(
+            1024, 256, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=256, eps=1e-05)
+          )
+          (conv2): Conv2d(
+            256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=256, eps=1e-05)
+          )
+          (conv3): Conv2d(
+            256, 1024, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=1024, eps=1e-05)
+          )
+        )
+        (5): BottleneckBlock(
+          (conv1): Conv2d(
+            1024, 256, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=256, eps=1e-05)
+          )
+          (conv2): Conv2d(
+            256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=256, eps=1e-05)
+          )
+          (conv3): Conv2d(
+            256, 1024, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=1024, eps=1e-05)
+          )
+        )
+      )
+      (res5): Sequential(
+        (0): BottleneckBlock(
+          (shortcut): Conv2d(
+            1024, 2048, kernel_size=(1, 1), stride=(2, 2), bias=False
+            (norm): FrozenBatchNorm2d(num_features=2048, eps=1e-05)
+          )
+          (conv1): Conv2d(
+            1024, 512, kernel_size=(1, 1), stride=(2, 2), bias=False
+            (norm): FrozenBatchNorm2d(num_features=512, eps=1e-05)
+          )
+          (conv2): Conv2d(
+            512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=512, eps=1e-05)
+          )
+          (conv3): Conv2d(
+            512, 2048, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=2048, eps=1e-05)
+          )
+        )
+        (1): BottleneckBlock(
+          (conv1): Conv2d(
+            2048, 512, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=512, eps=1e-05)
+          )
+          (conv2): Conv2d(
+            512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=512, eps=1e-05)
+          )
+          (conv3): Conv2d(
+            512, 2048, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=2048, eps=1e-05)
+          )
+        )
+        (2): BottleneckBlock(
+          (conv1): Conv2d(
+            2048, 512, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=512, eps=1e-05)
+          )
+          (conv2): Conv2d(
+            512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=512, eps=1e-05)
+          )
+          (conv3): Conv2d(
+            512, 2048, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (norm): FrozenBatchNorm2d(num_features=2048, eps=1e-05)
+          )
+        )
+      )
+    )
+  )
+  (head): RetinaNetHead(
+    (cls_subnet): Sequential(
+      (0): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      (1): ReLU()
+      (2): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      (3): ReLU()
+      (4): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      (5): ReLU()
+      (6): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      (7): ReLU()
+    )
+    (bbox_subnet): Sequential(
+      (0): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      (1): ReLU()
+      (2): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      (3): ReLU()
+      (4): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      (5): ReLU()
+      (6): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      (7): ReLU()
+    )
+    (cls_score): Conv2d(256, 9, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (bbox_pred): Conv2d(256, 36, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+  )
+  (anchor_generator): DefaultAnchorGenerator(
+    (cell_anchors): BufferList()
+  )
+)
+'''
+
+**Data structure**
+
+'''
+python
+
+Structure for train dataset: 
+
+{'annotations': [{'bbox': [122, 639, 145, 645],
+                  'bbox_mode': <BoxMode.XYXY_ABS: 0>,
+                  'category_id': 0},
+                 {'bbox': [200, 649, 218, 654],
+                  'bbox_mode': <BoxMode.XYXY_ABS: 0>,
+                  'category_id': 0}],
+ 'file_name': '/kaggle/input/vehivle-registration-plate/Dataset/train/Vehicle '
+              'registration plate/688f112cf2794184.jpg',
+ 'height': 768,
+ 'image_id': '688f112cf2794184',
+ 'width': 1024}
+'''
 
 
-**Conclusions**
-Seems that iterating through less epochs by reading the first test improves the accuracy metric of the model, this is due to an overfitting behaviour causing thus divergence towards the goal
-## Citation
+**Instances**
+|   category    | #instances   |
+|:-------------:|:-------------|
+| vehicle-reg-plate | 7761         |
+|               |              |
 
-OpenCV Courses, Prakash Chandra, Satya Mallick, veb, VikasGupta. (2020). OpenCV Pytorch Course - Classification. Kaggle. https://kaggle.com/competitions/opencv-pytorch-dl-course-classification
+## Inference
+
+'''
+python
+{
+  'instances': 
+  Instances(
+    num_instances=1, 
+    image_height=768, 
+    image_width=1024, 
+    fields=[
+      pred_boxes: 
+        Boxes(tensor([[395.4830, 324.7726, 681.5881, 425.3839]], device='cuda:0')), 
+        scores: tensor([0.8202], device='cuda:0'), 
+        pred_classes: tensor([0], device='cuda:0')
+    ]
+  )
+}
+'''
+
+![2](images/2.png)
+
+## COCO Detection Evaluation
+
+'''
+python
+Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.592
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.890
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.683
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.265
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.694
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.673
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.541
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.673
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.679
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.437
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.766
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.745
+[12/23 16:51:40 d2.evaluation.coco_evaluation]: Evaluation results for bbox: 
+|   AP   |  AP50  |  AP75  |  APs   |  APm   |  APl   |
+|:------:|:------:|:------:|:------:|:------:|:------:|
+| 59.173 | 88.992 | 68.311 | 26.535 | 69.448 | 67.284 |
+OrderedDict([('bbox',
+              {'AP': 59.17304357245333,
+               'AP50': 88.99199438562263,
+               'AP75': 68.31052454421511,
+               'APs': 26.5352932831453,
+               'APm': 69.44785626949216,
+               'APl': 67.28449014299046})])
+'''
+
+## Run Inference on a Video
+
+**Input video**
+![input video](/projet3-input-video.mp4)
+
+**Results**
+![result](video/stacked_output_video.mp4)
